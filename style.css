@@ -316,7 +316,7 @@ button.mini { padding: 5px 10px; font-size: 11.5px; border-radius: 7px; }
   padding: 10px 12px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
   box-shadow: var(--shadow);
 }
-.panel .msg { font-size: 12.5px; color: var(--dim); flex: 1; min-width: 100px; line-height: 1.5; }
+.panel .msg { font-size: 12.5px; color: var(--dim); flex: 1 1 100%; min-width: 0; line-height: 1.55; }
 .panel .msg b { color: var(--ink); }
 .panel .picks { display: flex; gap: 4px; }
 .panel button { padding: 8px 13px; font-size: 13px; }
@@ -331,14 +331,28 @@ button.mini { padding: 5px 10px; font-size: 11.5px; border-radius: 7px; }
 .who-line .pt { margin-left: auto; color: var(--accent); font-size: 15px; }
 .who-line .sub { font-size: 10.5px; color: var(--faint); font-weight: 500; }
 .stacks { display: flex; gap: 5px; }
-.stack { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stack {
+  position: relative; flex: 1 1 0; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; border-radius: 9px; padding: 4px 0 5px;
+}
 .stack .bn {
   width: 100%; height: 22px; border-radius: 5px; font-size: 11.5px; font-weight: 800;
   display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,.25);
 }
 .stack .gm { font-size: 11px; color: var(--dim); }
 .stack .gm.zero { color: var(--zero); }
-.stack.pickable .gm { cursor: pointer; color: var(--ink); }
+/* 버리기 단계 — 칸 전체가 버튼이다. 글자만 누르게 하면 손가락으로는 못 누른다. */
+.stack.pickable { cursor: pointer; background: var(--panel2); box-shadow: inset 0 0 0 1px var(--line); }
+.stack.pickable:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
+.stack.pickable .gm { color: var(--ink); }
+.stack.tip { box-shadow: inset 0 0 0 2px var(--accent); }
+.stack.picked .bn { opacity: .5; }
+.stack .minus {
+  position: absolute; top: -5px; right: -3px; min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 999px; background: var(--bad); color: #fff;
+  font-size: 10.5px; font-weight: 800; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
 .stack .gm.on { color: var(--accent); font-weight: 800; }
 .kept { display: flex; gap: 5px; margin-top: 9px; align-items: center; }
 .kept .lbl { font-size: 10.5px; color: var(--faint); }

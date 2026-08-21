@@ -105,6 +105,29 @@ section('칩 10개 제한');
   ok('한 개 버리면 차례가 넘어감', R.discard(s, 'p0', ['w']).ok && s.phase === 'play' && s.turn === 1);
   ok('버린 칩은 은행으로', s.players[0].gems.w === 3);
   ok('10개가 됨', R.tokenCount(s.players[0]) === 10);
+
+  // 같은 색을 여러 개 버리는 경우 (화면에서 같은 칸을 두 번 누르는 상황)
+  var s2 = game(2, 7);
+  s2.players[0].gems = gems({ w: 5, u: 4 });
+  R.takeGems(s2, 'p0', ['g', 'r', 'k']);
+  ok('12개면 2개를 버려야 한다', s2.phase === 'discard' &&
+     R.tokenCount(s2.players[0]) - R.MAX_TOKENS === 2);
+  ok('한 개만 내면 거부', !R.discard(s2, 'p0', ['w']).ok);
+  ok('가진 것보다 많이 내면 거부', !R.discard(s2, 'p0', ['g', 'g']).ok);
+  var bankW = s2.bank.w;
+  ok('같은 색 2개 버리기', R.discard(s2, 'p0', ['w', 'w']).ok);
+  ok('그 색이 2개 줄고 은행이 2개 늘었다',
+     s2.players[0].gems.w === 3 && s2.bank.w === bankW + 2, s2.players[0].gems.w + '/' + s2.bank.w);
+  ok('10개가 됨', R.tokenCount(s2.players[0]) === 10);
+
+  // 세 개를 넘겨야 하는 경우도 (황금까지 섞어서)
+  var s3 = game(2, 8);
+  s3.players[0].gems = gems({ w: 4, u: 4, y: 2 });
+  R.takeGems(s3, 'p0', ['g', 'r', 'k']);
+  ok('13개면 3개', R.tokenCount(s3.players[0]) - R.MAX_TOKENS === 3);
+  var bankY = s3.bank.y;
+  ok('황금도 버릴 수 있다', R.discard(s3, 'p0', ['y', 'w', 'w']).ok &&
+     s3.players[0].gems.y === 1 && s3.bank.y === bankY + 1);
 })();
 
 section('카드 사기');

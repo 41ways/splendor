@@ -75,13 +75,32 @@
   }
 
   function applyView(v) {
+    var prev = App.view;
     var sig = sigOf(v);
     if (sig !== App.sig) { clearSel(); App.sig = sig; }
     App.view = v;
     App.tip = tipFor(v);
     render();
+
+    // 버리기 단계에서는 눌러야 할 내 칩이 아래 조작 판에 가린다. 판 위로 끌어올린다.
+    if (v.phase === 'discard' && isMyTurn(v) && (!prev || prev.phase !== 'discard')) showMine();
     if (v.phase === 'over') showOver(v);
     scheduleBot();
+  }
+
+  // 내 칩 줄이 아래 조작 판에 가리지 않는 자리까지 스크롤한다
+  function showMine() {
+    var box = $('mine'), panel = document.querySelector('.panel');
+    if (!box) return;
+    var lift = (panel ? panel.offsetHeight : 0) + 14;
+    var y = window.scrollY + box.getBoundingClientRect().bottom - window.innerHeight + lift;
+    if (y <= window.scrollY) return;                 // 이미 잘 보이면 그대로 둔다
+    try { window.scrollTo({ top: y, behavior: 'smooth' }); }
+    catch (e) { window.scrollTo(0, y); }
+    // 부드러운 스크롤은 탭이 뒤에 있으면 무시되기도 한다. 안 갔으면 그냥 옮긴다.
+    setTimeout(function () {
+      if (Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y);
+    }, 320);
   }
 
   function scheduleBot() {
@@ -215,6 +234,15 @@
   function gemNames(list) {
     return list.map(function (c) { return NAME[c]; }).join(' · ');
   }
+  // 같은 색이 겹치면 '사파이어 · 사파이어' 대신 '사파이어 2개' 로 묶는다
+  function gemTally(list) {
+    var seen = [], count = {};
+    list.forEach(function (c) {
+      if (!count[c]) { count[c] = 0; seen.push(c); }
+      count[c]++;
+    });
+    return seen.map(function (c) { return NAME[c] + (count[c] > 1 ? ' ' + count[c] + '개' : ''); }).join(' · ');
+  }
   // 받침에 따라 조사를 고른다 ('에메랄드을' 이 되지 않게)
   function josa(word, withBatchim, without) {
     var last = word.charCodeAt(word.length - 1) - 0xAC00;
@@ -227,8 +255,16 @@
     var p = meOf(v);
     if (!p) return null;
 
-    // 버리기·귀족 단계는 아래 조작 판이 이미 설명하므로, 짚어 주기만 한다
-    if (v.phase === 'discard') return null;
+    if (v.phase === 'discard') {
+      var rec = [];
+      try { rec = AI.chooseDiscard(v) || []; } catch (e) {}
+      if (!rec.length) return null;
+      return {
+        text: '<b>' + gemTally(rec) + '</b>' + josa(gemTally(rec), '을', '를') +
+              ' 버리는 게 좋아 보입니다. 지금 노리는 카드에 안 쓰는 색입니다.',
+        drop: rec
+      };
+    }
     if (v.phase === 'noble') return { noble: true };
 
     var a = null;
@@ -281,7 +317,7 @@
 
   // 뭔가 고른 상태에서는 점선을 지운다 — 지금 하려는 일에 집중하게
   function tipActive() {
-    return !!App.tip && !App.selCard && !App.selDeck && !App.gems.length;
+    return !!App.tip && !App.selCard && !App.selDeck && !App.gems.length && !App.drop.length;
   }
 
   /* ---------------- 판 그리기 ---------------- */
@@ -373,25 +409,31 @@
 
   function stacksFor(v, p, pickable) {
     var box = el('div', 'stacks');
+    var need = pickable ? R.tokenCount(p) - R.MAX_TOKENS : 0;
+
     R.ALL.forEach(function (c) {
-      var st = el('div', 'stack' + (pickable ? ' pickable' : ''));
-      var bn = el('div', 'bn gem-' + c, c === GOLD ? '·' : String(p.bonus[c] || 0));
-      st.appendChild(bn);
+      var st = el('div', 'stack');
       var picked = App.drop.filter(function (x) { return x === c; }).length;
-      var gm = el('div', 'gm' + (p.gems[c] ? '' : ' zero') + (picked ? ' on' : ''),
-                  '칩 ' + (p.gems[c] - (pickable ? picked : 0)));
+
+      st.appendChild(el('div', 'bn gem-' + c, c === GOLD ? '·' : String(p.bonus[c] || 0)));
+      st.appendChild(el('div', 'gm' + (p.gems[c] ? '' : ' zero') + (picked ? ' on' : ''),
+                        '칩 ' + (p.gems[c] - (pickable ? picked : 0))));
+      if (picked) {
+        st.classList.add('picked');
+        st.appendChild(el('div', 'minus', '−' + picked));
+      }
+
       if (pickable) {
-        gm.onclick = function () {
-          var need = R.tokenCount(p) - R.MAX_TOKENS;
-          if (picked && (App.drop.indexOf(c) >= 0)) {
-            App.drop.splice(App.drop.indexOf(c), 1);
-          } else if (App.drop.length < need && p.gems[c] > picked) {
-            App.drop.push(c);
-          }
+        st.classList.add('pickable');
+        if (tipActive() && App.tip.drop && App.tip.drop.indexOf(c) >= 0) st.classList.add('tip');
+        // 누를 때마다 하나씩 더 고른다. 다 골랐는데 또 누르면 그 색을 하나 되돌린다.
+        st.onclick = function () {
+          var cur = App.drop.filter(function (x) { return x === c; }).length;
+          if (App.drop.length < need && cur < p.gems[c]) App.drop.push(c);
+          else if (cur > 0) App.drop.splice(App.drop.indexOf(c), 1);
           render();
         };
       }
-      st.appendChild(gm);
       box.appendChild(st);
     });
     return box;
@@ -501,11 +543,18 @@
 
     if (v.phase === 'discard') {
       var over = R.tokenCount(p) - R.MAX_TOKENS;
-      msg('칩이 <b>' + R.tokenCount(p) + '개</b>입니다. 아래 내 칩을 눌러 <b>' + over + '개</b>를 버리세요.');
+      msg('칩은 <b>10개까지</b>입니다. 지금 ' + R.tokenCount(p) + '개라, 아래 <b>내 칩</b>에서 <b>' +
+          over + '개</b>를 눌러 버려야 합니다. 같은 색을 두 번 눌러도 됩니다.');
       var picks = el('div', 'picks');
       App.drop.forEach(function (c) { picks.appendChild(chip(c, 1)); });
       inner.appendChild(picks);
-      btn('버리기', function () { act('discard', [App.drop.slice()]); }, true, App.drop.length !== over);
+      btn('버리기 (' + App.drop.length + '/' + over + ')', function () {
+        act('discard', [App.drop.slice()]);
+      }, true, App.drop.length !== over);
+      if (App.drop.length) btn('다시 고르기', function () { App.drop = []; render(); });
+      else if (App.tip && App.tip.drop && App.tip.drop.length === over) {
+        btn('추천대로 버리기', function () { act('discard', [App.tip.drop.slice()]); });
+      }
       return;
     }
 
