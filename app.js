@@ -723,6 +723,20 @@
     try { localStorage.setItem('splendor.seen', '1'); } catch (e) {}
   }
 
+  /* ---------------- 테마 ---------------- */
+  function setTheme(t, remember) {
+    document.documentElement.setAttribute('data-theme', t);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', t === 'light' ? '#f2ecdf' : '#151318');
+    var boxes = document.querySelectorAll('.theme-in');
+    for (var i = 0; i < boxes.length; i++) {
+      boxes[i].checked = (t === 'light');
+      var lbl = boxes[i].parentNode.querySelector('.lbl');
+      if (lbl) lbl.textContent = (t === 'light') ? '☀' : '☾';
+    }
+    if (remember) { try { localStorage.setItem('splendor.theme', t); } catch (e) {} }
+  }
+
   /* ---------------- 버튼 ---------------- */
   $('btnSolo').onclick = function () {
     var count = parseInt($('soloCount').value, 10);
@@ -763,6 +777,15 @@
   };
   $('btnTourPrev').onclick = function () { tourShow(App.tourStep - 1); };
   $('btnTourSkip').onclick = tourClose;
+
+  // 테마 — <head> 에서 이미 정해 놓은 값을 화면 스위치에 맞춰 둔다
+  (function () {
+    setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark', false);
+    var boxes = document.querySelectorAll('.theme-in');
+    for (var i = 0; i < boxes.length; i++) {
+      boxes[i].onchange = function () { setTheme(this.checked ? 'light' : 'dark', true); };
+    }
+  })();
 
   // 도우미 — 처음 온 사람에게는 켜진 채로 시작하고, 한 번 끄면 그 선택을 기억한다
   (function () {
