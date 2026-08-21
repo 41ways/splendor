@@ -15,7 +15,7 @@
   };
 
   function show(which) {
-    ['home', 'lobby', 'game'].forEach(function (id) {
+    ['home', 'setup', 'lobby', 'game'].forEach(function (id) {
       $(id).classList.toggle('hidden', id !== which);
     });
   }
@@ -719,8 +719,11 @@
     $('tour').classList.remove('hidden');
   }
   function tourClose() {
+    var onTitle = !$('home').classList.contains('hidden');
     $('tour').classList.add('hidden');
     try { localStorage.setItem('splendor.seen', '1'); } catch (e) {}
+    // 마지막 장의 버튼이 '시작하기'다. 타이틀에서 봤다면 그대로 고르는 화면으로 넘긴다.
+    if (onTitle && App.tourStep === TOUR_LAST) show('setup');
   }
 
   /* ---------------- 테마 ---------------- */
@@ -768,6 +771,8 @@
   $('btnStart').onclick = function () { startEngine(); };
   $('btnLeave').onclick = function () { if (App.net) App.net.close(); location.reload(); };
   $('btnAgain').onclick = function () { if (App.net) App.net.close(); location.reload(); };
+  $('btnBegin').onclick = function () { show('setup'); };   // 자동 포커스는 안 준다 — 모바일에서 자판이 튀어나온다
+  $('btnBack').onclick = function () { show('home'); };
   $('btnRules').onclick = function () { tourShow(0); };
   $('btnHelp').onclick = function () { $('rules').classList.remove('hidden'); };
   $('btnCloseRules').onclick = function () { $('rules').classList.add('hidden'); };

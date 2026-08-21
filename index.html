@@ -20,7 +20,7 @@
   document.documentElement.setAttribute('data-theme', t);
 })();
 </script>
-<link rel="stylesheet" href="style.css?v=6417de6b">
+<link rel="stylesheet" href="style.css?v=5ae184c7">
 </head>
 <body>
 
@@ -73,7 +73,7 @@
   </symbol>
 </svg>
 
-<!-- 홈 -->
+<!-- 타이틀 -->
 <section id="home" class="screen">
   <div class="wrap">
     <div class="topline">
@@ -91,7 +91,21 @@
       </div>
       <h1>스플렌더</h1>
       <p class="tag">보석을 모아 개발 카드를 삽니다.<br>카드는 다음 카드를 깎아주고, 귀족은 알아서 찾아옵니다.</p>
-      <button id="btnRules" class="learn">처음이면 — 어떻게 하는 게임인지 보기</button>
+
+      <div class="hero-acts">
+        <button id="btnBegin" class="primary big">시작하기</button>
+        <button id="btnRules" class="learn">처음이면 — 어떻게 하는 게임인지 보기</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 어떻게 할지 고르기 -->
+<section id="setup" class="screen hidden">
+  <div class="wrap">
+    <div class="topline">
+      <button id="btnBack" class="back">← 타이틀</button>
+      <label class="sw theme"><input type="checkbox" class="theme-in"><span class="track"></span><span class="lbl">☾</span></label>
     </div>
 
     <label class="namerow">
@@ -337,6 +351,6 @@
 <script src="rules.js?v=b48908f9"></script>
 <script src="ai.js?v=40eadb31"></script>
 <script src="net.js?v=face632c"></script>
-<script src="app.js?v=9385a9bd"></script>
+<script src="app.js?v=23e26641"></script>
 </body>
 </html>
